@@ -1,3 +1,9 @@
+# ======================== #
+#
+#   Lootboxes v1.0 by Blinqx
+#
+# ======================== #
+
 options:
     # Chance to win an item of specified rarity *after the guarenteed minimum*
     # Chance will be run (the difference between max and min) times after guarenteed minimum
@@ -25,9 +31,9 @@ options:
     lootboxSize: 4 # Size of lootbox inventory (3-6) *Make sure there's enough room for the minimum amount of all items*
 
     # No Permission Message
-	permDenied: &8• &7You lack permission for that
+    permDenied: &8• &7You lack permission for that
 	# Permission Node Prefix
-	permPrefix: skript # permission node will begin with this, ex: "skript.lootbox"
+    permPrefix: skript # permission node will begin with this, ex: "skript.lootbox"
 
 on load:
     # Example hard-coded rewards list (delete or edit here for it to change in-game)
@@ -51,6 +57,7 @@ on right click with chest:
         if player has permission "skript.lootbox":
             set slot {@lootboxSize}*9-5 of player's current inventory to barrier named "&cClose & Trash" with lore "&8• &7Close inventory without" and "  &7receiving any items" # Admin option to keep a clean inventory when opening many boxes
         setLootboxItems(player, {rewards::%{_type::2}%::*}) # Call function that sets each slot to a reward
+        remove 1 of player's tool from player
 
 # View Lootbox
 on left click with chest:
@@ -103,10 +110,12 @@ on inventory click:
             close player's inventory # Close the lootbox inventory
             delete {-closeTrash::%player%} # Delete status so next lootbox rewards can be received if wanted
 
+
+
 command /lootbox [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
-	permission: {@permPrefix}.lootbox
-	permission message: {@permDenied}
-	trigger:
+    permission: {@permPrefix}.lootbox
+    permission message: {@permDenied}
+    trigger:
         if arg-1 is not set:
             set {_help} to true
         if arg-1 is "help":
@@ -264,6 +273,8 @@ command /lootbox [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                 send "&cPlease specify which lootbox to edit" to player
 
 
+
+
 function setLootboxItems(p: player,list: objects):
     loop {_list::*}:
         set {_index} to loop-index parsed as an integer
@@ -277,6 +288,7 @@ function setLootboxItems(p: player,list: objects):
     setWithChance({_p},"rare",{_rarities::rare::*},{_list::*},{@minRare},{@maxRare},{@chanceRare})
     setWithChance({_p},"epic",{_rarities::epic::*},{_list::*},{@minEpic},{@maxEpic},{@chanceEpic})
     setWithChance({_p},"legendary",{_rarities::legendary::*},{_list::*},{@minLegendary},{@maxLegendary},{@chanceLegendary})
+    
 
 function showLootboxItems(p: player,list: objects):
     set {_slot} to 9
@@ -302,6 +314,7 @@ function chestGlassBorder(p:player, size: integer, item: item):
 
 function giveLootbox(p:player, name:string, amnt:integer):
     give {_p} {_amnt} of chest named "&b🎁 Lootbox - %{_name}%" with lore "&8• &7Win all items shown" and "&8  &7when opened" and "" and "&8• &7Right-Click to Open" and "&8• &7Left-Click to View"
+
 
 function indexOf(list:objects,check:object):: integer:
     if {_list::*} contains {_check}:
@@ -346,3 +359,5 @@ function coloredRarity(rarity:string,rarities:objects):: string:
     set {_index} to indexOf({_rarities::*},{_rarity})
     set {_colored} to {_rarities::%{_index}+1%}
     return {_colored}
+
+
