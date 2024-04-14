@@ -1,6 +1,6 @@
 # ======================== #
 #
-#   Lootboxes v1.0 by Blinqx
+#   Lootboxes v1.1 by Blinqx
 #
 # ======================== #
 
@@ -29,6 +29,7 @@ options:
     minLegendary: 0
 
     lootboxSize: 4 # Size of lootbox inventory (3-6) *Make sure there's enough room for the minimum amount of all items*
+    lootboxViewSize: 4 # Size of lootbox view inventory (3-6) *Seperate from actual lootbox inventory in case you have a large amount of possible rewards*
 
     # No Permission Message
     permDenied: &8• &7You lack permission for that
@@ -39,12 +40,18 @@ on load:
     # Example hard-coded rewards list (delete or edit here for it to change in-game)
     # !!!!NOTE: LINE #31 WILL OVERRIDE ANYTHING DONE IN-GAME, SO EDIT, COMMENT OUT, OR DELETE THE LINE HERE IF YOU WANT TO EDIT IT IN-GAME
     # Format: "item||min||max||rarity||item||min||max||rarity||..."
-    set {rewards::common::*} to "dirt||10||16||Common||stone||2||8||Common||cobblestone||8||32||Common||andesite||1||8||Common||granite||1||16||Common||gravel||1||16||Common||oak plank||5||16||Common||leather||1||4||Uncommon||steak||2||8||Uncommon||oak log||1||16||Uncommon||iron ingot||1||8||Rare||gold ingot||1||4||rare||diamond||1||4||epic||netherite ingot||1||1||legendary" split at "||"
+    set {rewards::default::*} to "dirt||10||16||Common||stone||2||8||Common||cobblestone||8||32||Common||andesite||1||8||Common||granite||1||16||Common||gravel||1||16||Common||sand||1||8||Common||oak plank||5||16||Common||bread||4||8||Common||leather||1||4||Uncommon||steak||2||8||Uncommon||oak log||2||16||Uncommon||coal||3||8||Uncommon||iron ingot||1||8||Rare||gold ingot||1||4||rare||diamond||1||4||epic||emerald||1||8||epic||golden apple||2||4||epic||netherite ingot||1||1||legendary||enchanted golden apple||1||1||legendary" split at "||"
     
-    # Rarity names and corresponding formats (Used for lootbox and item rarity)
+    # Rarity names and corresponding formats. Add here to add new crate rarity (Used for lootbox and item rarity)
     # Format: Rarity Name||Displayed Name
-    set {rarities::*} to "Common||&7Common||UnCommon||&3UnCommon||Rare||&9Rare||Epic||&5Epic||Legendary||&6Legendary" split at "||"
-
+    set {rarities::*} to "Default||&7Default||Common||&7Common||UnCommon||&3UnCommon||Rare||&9Rare||Epic||&5Epic||Legendary||&6Legendary" split at "||"
+    if {@minCommon}+{@minUncommon}+{@minRare}+{@minEpic}+{@minLegendary} > ({@lootboxSize}-2)*9:
+        wait 10 ticks
+        broadcast ""
+        broadcast "&c&l!!! NOTE: &cMinimum lootbox rewards exceeds lootbox size!" 
+        broadcast "&c    -  &o(%{@minCommon}+{@minUncommon}+{@minRare}+{@minEpic}+{@minLegendary}% Min / %({@lootboxSize}-2)*9% Slots)"
+        broadcast "&c    - Please increase ""&7lootboxSize&c"" in options"
+        broadcast ""
 
 # Open Lootbox
 on right click with chest:
@@ -65,9 +72,10 @@ on left click with chest:
     if "%{_lore::1}%" contains "Win": # Make sure tool is lootbox by checking lore (generally uneditable by normal players)
         cancel event
         set {_type::*} to uncolored name of player's tool split at "- " # Get rarity of lootbox that player is using
-        open virtual chest with size 4 named "%name of player's tool% Rewards" to player
-        chestGlassBorder(player, 4, dark gray stained glass pane) # Set top and bottom glass border
-        showLootboxItems(player, {rewards::%{_type::2}%::*}) # Call function that shows lootbox rewards
+        open virtual chest with size {@lootboxViewSize} named "%name of player's tool% Rewards" to player
+        chestGlassBorder(player, {@lootboxViewSize}, dark gray stained glass pane) # Set top and bottom glass border
+        showLootboxItems(player, {rewards::%{_type::2}%::*},1) # Call function that shows lootbox rewards
+        #set slot {@lootboxViewSize}*9-4 of player's current inventory to paper named "&bNext Page" with lore "&8• &7View Page 2"
 
 # Disallow chests named "lootbox" from being placed to avoid possible exploits
 on place of chest:
@@ -109,6 +117,22 @@ on inventory click:
             set {-closeTrash::%player%} to true # Set status so inventory close event knows not to run
             close player's inventory # Close the lootbox inventory
             delete {-closeTrash::%player%} # Delete status so next lootbox rewards can be received if wanted
+        if name of event-item contains "Next":
+            set {_type::*} to uncolored name of player's tool split at "- "
+            set {_lore::*} to lore of event-item
+            set {_page::*} to {_lore::1} split at " "
+            set {_pageNum} to {_page::4} parsed as an integer
+            open virtual chest with size {@lootboxViewSize} named "%name of player's tool% Rewards" to player
+            chestGlassBorder(player, {@lootboxViewSize}, dark gray stained glass pane)
+            showLootboxItems(player, {rewards::%{_type::2}%::*},{_pageNum})
+        if name of event-item contains "Previous":
+            set {_type::*} to uncolored name of player's tool split at "- "
+            set {_lore::*} to lore of event-item
+            set {_page::*} to {_lore::1} split at " "
+            set {_pageNum} to {_page::4} parsed as an integer
+            open virtual chest with size {@lootboxViewSize} named "%name of player's tool% Rewards" to player
+            chestGlassBorder(player, {@lootboxViewSize}, dark gray stained glass pane)
+            showLootboxItems(player, {rewards::%{_type::2}%::*},{_pageNum})
 
 
 
@@ -290,10 +314,19 @@ function setLootboxItems(p: player,list: objects):
     setWithChance({_p},"legendary",{_rarities::legendary::*},{_list::*},{@minLegendary},{@maxLegendary},{@chanceLegendary})
     
 
-function showLootboxItems(p: player,list: objects):
+function showLootboxItems(p: player,list: objects, page:integer):
     set {_slot} to 9
-    loop {_list::*}:
-        set {_index} to loop-index parsed as an integer
+    set {_minItem} to 1
+    if {_page} > 1:
+        set {_minItem} to ({_page}*({@lootboxViewSize}-2)*9)-(({@lootboxViewSize}-2)*9)+1
+        set slot {@lootboxViewSize}*9-6 of {_p}'s current inventory to paper named "&bPrevious Page" with lore "&8• &7View Page %{_page}-1%"
+    set {_limit} to {@lootboxViewSize}*9-10
+    set {_index} to {_minItem}*4-3
+    set {_type::*} to uncolored name of {_p}'s tool split at "- "
+    set {_size} to size of {rewards::%{_type::2}%::*}
+    while {_list::%{_index}%} is set:
+        if {_slot} > {_limit}:
+            exit loop
         if mod({_index}-1, 4) = 0:
             set {_amtL} to {_list::%{_index}+1%} parsed as an integer
             set {_amtU} to {_list::%{_index}+2%} parsed as an integer
@@ -302,6 +335,9 @@ function showLootboxItems(p: player,list: objects):
             set {_pItem} to proper case {_list::%{_index}%}
             set slot {_slot} of {_p}'s current inventory to {_amtU} of {_item} named "&b%{_pItem}%" with lore "&7Amount: &3%{_amtL}%-%{_amtU}%" and "&7Rarity: %proper case {_rarity}%"
             add 1 to {_slot}
+        add 1 to {_index}
+    if {_size}-2 > {_index}:
+        set slot {@lootboxViewSize}*9-4 of {_p}'s current inventory to paper named "&bNext Page" with lore "&8• &7View Page %{_page}+1%"
 
 function chestGlassBorder(p:player, size: integer, item: item):
     loop 9 times:
@@ -359,5 +395,3 @@ function coloredRarity(rarity:string,rarities:objects):: string:
     set {_index} to indexOf({_rarities::*},{_rarity})
     set {_colored} to {_rarities::%{_index}+1%}
     return {_colored}
-
-
