@@ -1,6 +1,6 @@
 # ======================== #
 #
-#   Lootboxes v1.1 by Blinqx
+#   Lootboxes v1.2 by Blinqx
 #
 # ======================== #
 
@@ -41,10 +41,21 @@ on load:
     # !!!!NOTE: LINE #31 WILL OVERRIDE ANYTHING DONE IN-GAME, SO EDIT, COMMENT OUT, OR DELETE THE LINE HERE IF YOU WANT TO EDIT IT IN-GAME
     # Format: "item||min||max||rarity||item||min||max||rarity||..."
     set {rewards::default::*} to "dirt||10||16||Common||stone||2||8||Common||cobblestone||8||32||Common||andesite||1||8||Common||granite||1||16||Common||gravel||1||16||Common||sand||1||8||Common||oak plank||5||16||Common||bread||4||8||Common||leather||1||4||Uncommon||steak||2||8||Uncommon||oak log||2||16||Uncommon||coal||3||8||Uncommon||iron ingot||1||8||Rare||gold ingot||1||4||rare||diamond||1||4||epic||emerald||1||8||epic||golden apple||2||4||epic||netherite ingot||1||1||legendary||enchanted golden apple||1||1||legendary" split at "||"
-    
+
     # Rarity names and corresponding formats. Add here to add new crate rarity (Used for lootbox and item rarity)
     # Format: Rarity Name||Displayed Name
     set {rarities::*} to "Default||&7Default||Common||&7Common||UnCommon||&3UnCommon||Rare||&9Rare||Epic||&5Epic||Legendary||&6Legendary" split at "||"
+    
+    
+
+    # Convert all hard-coded string-type items to item-type
+    loop {rarities::*}:
+        loop {rewards::%loop-value%::*}:
+            set {_index} to loop-index-2 parsed as an integer
+            if "%loop-value-2%" parsed as an item is an item:
+                set {rewards::%loop-value-1%::%{_index}%} to {rewards::%loop-value-1%::%{_index}%} parsed as an item
+
+    # Error message if minimum rewards can't fit inside of the set lootboxSize
     if {@minCommon}+{@minUncommon}+{@minRare}+{@minEpic}+{@minLegendary} > ({@lootboxSize}-2)*9:
         wait 10 ticks
         broadcast ""
@@ -52,6 +63,7 @@ on load:
         broadcast "&c    -  &o(%{@minCommon}+{@minUncommon}+{@minRare}+{@minEpic}+{@minLegendary}% Min / %({@lootboxSize}-2)*9% Slots)"
         broadcast "&c    - Please increase ""&7lootboxSize&c"" in options"
         broadcast ""
+
 
 # Open Lootbox
 on right click with chest:
@@ -136,7 +148,7 @@ on inventory click:
 
 
 
-command /lootbox [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
+command /lootbox [<text>] [<text>] [<item>] [<text>] [<text>] [<text>]:
     permission: {@permPrefix}.lootbox
     permission message: {@permDenied}
     trigger:
@@ -165,63 +177,32 @@ command /lootbox [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                 send "&8• &7%{rarities::%{_index}%}%&7 || %{rarities::%{_index}+1%}%"
                 add 2 to {_index}
             send ""
-        if arg-1 is "get":
-            if arg-2 is set:
-                if {rarities::*} contains arg-2:
-                    set {_name} to coloredRarity(arg-2,{rarities::*})
-                    set {_amnt} to arg-3 parsed as an integer ? 1
-                    giveLootbox(player, {_name}, {_amnt})
-                else:
-                    send "&cThat lootbox doesn't exist"
-        if arg-1 is "give":
-            if arg-2 is set:
-                if {rarities::*} contains arg-2:
-                    if arg-3 is set:
-                        if arg-3 parsed as a player is online:
-                            if arg-4 parsed as an integer is an integer:
-                                set {_name} to coloredRarity(arg-2,{rarities::*})
-                                giveLootbox(arg-3 parsed as a player, {_name}, arg-4 parsed as an integer)
-                                send "&7Gave &b%arg-3 parsed as a player% &3%arg-4%x %{_name}% &7lootbox"
-                            else:
-                                send "&cArg-4 must be a number"
-                        else:
-                            send "&c%arg-3 parsed as a player% is not online"
-                    else:
-                        send "&cPlease specify a player"
-                else:
-                    send "&c%proper case arg-2% is not a lootbox" to player
-            else:
-                send "&cPlease specify which lootbox to give" to player
         if arg-1 is "add":
             if arg-2 is set:
                 if {rarities::*} contains arg-2:
                     if arg-3 is set:
-                        set {_item} to arg-3 parsed as an item
-                        if {_item} is set:
-                            if {rewards::%arg-2%::*} doesn't contain arg-3:
-                                if arg-4 parsed as an integer is an integer:
-                                    if arg-5 parsed as an integer is an integer:
-                                        if arg-6 is set:
-                                            if {rarities::*} contains arg-6:
-                                                add arg-3 to {rewards::%arg-2%::*}
-                                                add arg-4 to {rewards::%arg-2%::*}
-                                                add arg-5 to {rewards::%arg-2%::*}
-                                                add proper case arg-6 to {rewards::%arg-2%::*}
-                                                send "&7Added &b%proper case arg-3%&7 to %coloredRarity(arg-2,{rarities::*})%&7 lootbox as a %coloredRarity(arg-6,{rarities::*})% &7with range &3%arg-4%-%arg-5%&7"
-                                            else:
-                                                send "&cThat rarity doesn't exist"
+                        if {rewards::%arg-2%::*} doesn't contain arg-3:
+                            if arg-4 parsed as an integer is an integer:
+                                if arg-5 parsed as an integer is an integer:
+                                    if arg-6 is set:
+                                        if {rarities::*} contains arg-6:
+                                            add arg-3 to {rewards::%arg-2%::*}
+                                            add arg-4 to {rewards::%arg-2%::*}
+                                            add arg-5 to {rewards::%arg-2%::*}
+                                            add proper case arg-6 to {rewards::%arg-2%::*}
+                                            send "&7Added &b%arg-3%&7 to %coloredRarity(arg-2,{rarities::*})%&7 lootbox as a %coloredRarity(arg-6,{rarities::*})% &7with range &3%arg-4%-%arg-5%&7"
                                         else:
-                                            send "&cSpecify the rarity of the item"
+                                            send "&cThat rarity doesn't exist"
                                     else:
-                                        send "&cArg-5 must be a number" to player
+                                        send "&cSpecify the rarity of the item"
                                 else:
-                                    send "&cArg-4 must be a number" to player
+                                    send "&cArg-5 must be a number" to player
                             else:
-                                send "&c%proper case arg-2% lootbox already has %proper case arg-3%" to player
+                                send "&cArg-4 must be a number" to player
                         else:
-                            send "&cThat isn't an item" to player
+                            send "&c%proper case arg-2% lootbox already has %arg-3%" to player
                     else:
-                        send "&cPlease specify an item to add" to player
+                        send "&cArg-3 must be an item" to player
                 else:
                     send "&c%proper case arg-2% is not a lootbox" to player
             else:
@@ -234,23 +215,19 @@ command /lootbox [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
             if arg-2 is set:
                 if {rarities::*} contains arg-2:
                     if arg-3 is set:
-                        set {_item} to arg-3 parsed as an item
-                        if {_item} is set:
-                            if {rewards::%arg-2%::*} contains arg-3:
-                                loop {rewards::%arg-2%::*}:
-                                    set {_index} to loop-index parsed as an integer
-                                    if "%loop-value%" contains arg-3:
-                                        set {rewards::%arg-2%::%{_index}%} to {rewards::%arg-2%::%{_index}+4%}
-                                        send "&7Removed &b%proper case arg-3%&7 from %coloredRarity(arg-2,{rarities::*})%&7 lootbox"
-                                        set {_removed} to {_index}
-                                    if {_removed} is set:
-                                        set {rewards::%arg-2%::%{_index}%} to {rewards::%arg-2%::%{_index}+4%}
-                            else:
-                                send "&c%proper case arg-2% doesn't have %proper case arg-3%"
+                        if {rewards::%arg-2%::*} contains arg-3:
+                            loop {rewards::%arg-2%::*}:
+                                set {_index} to loop-index parsed as an integer
+                                if loop-value is arg-3:
+                                    set {rewards::%arg-2%::%{_index}%} to {rewards::%arg-2%::%{_index}+4%}
+                                    send "&7Removed &b%arg-3%&7 from %coloredRarity(arg-2,{rarities::*})%&7 lootbox"
+                                    set {_removed} to {_index}
+                                if {_removed} is set:
+                                    set {rewards::%arg-2%::%{_index}%} to {rewards::%arg-2%::%{_index}+4%}
                         else:
-                            send "&cThat isn't an item" to player
+                            send "&c%proper case arg-2% doesn't have %arg-3%"
                     else:
-                        send "&cPlease specify an item to remove" to player
+                        send "&cArg-3 must be an item" to player
                 else:
                     send "&c%proper case arg-2% is not a lootbox" to player
             else:
@@ -259,44 +236,67 @@ command /lootbox [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
             if arg-2 is set:
                 if {rarities::*} contains arg-2:
                     if arg-3 is set:
-                        set {_item} to arg-3 parsed as an item
-                        if {_item} is set:
-                            if {rewards::%arg-2%::*} contains arg-3:
-                                if arg-4 is "range":
-                                    if arg-5 parsed as an integer is an integer:
-                                        if arg-6 parsed as an integer is an integer:
-                                            set {_index} to indexOf({rewards::%arg-2%::*},arg-3)
-                                            set {rewards::%arg-2%::%{_index}+1%} to arg-5
-                                            set {rewards::%arg-2%::%{_index}+2%} to arg-6
-                                            send "&7Changed range of &b%proper case arg-3% &7to &3%arg-5%-%arg-6%&7 in %coloredRarity(arg-2,{rarities::*})% lootbox" to player
-                                        else:
-                                            send "&cArg-6 must be a number" to player
+                        if {rewards::%arg-2%::*} contains arg-3:
+                            if arg-4 is "range":
+                                if arg-5 parsed as an integer is an integer:
+                                    if arg-6 parsed as an integer is an integer:
+                                        set {_index} to indexOf({rewards::%arg-2%::*},arg-3)
+                                        set {rewards::%arg-2%::%{_index}+1%} to arg-5
+                                        set {rewards::%arg-2%::%{_index}+2%} to arg-6
+                                        send "&7Changed range of &b%arg-3% &7to &3%arg-5%-%arg-6%&7 in %coloredRarity(arg-2,{rarities::*})% lootbox" to player
                                     else:
-                                        send "&cArg-5 must be a number" to player
-                                else if arg-4 is "rarity" or "chance" or "percent":
-                                    if arg-5 is set:
-                                        if {rarities::*} contains arg-5:
-                                            set {_index} to indexOf({rewards::%arg-2%::*},arg-3)
-                                            set {rewards::%arg-2%::%{_index}+3%} to arg-5
-                                            send "&7Changed rarity of &b%proper case arg-3% &7to %coloredRarity(arg-5,{rarities::*})%&7 in %coloredRarity(arg-2,{rarities::*})% lootbox" to player
-                                        else:
-                                            send "&cThat isn't a rarity" to player
-                                    else:
-                                        send "&cPlease specify a new rarity" to player
+                                        send "&cArg-6 must be a number" to player
                                 else:
-                                    send "&cUsage: /lootbox %arg-1% %arg-2% %arg-3% <""range""/""rarity"">" to player
+                                    send "&cArg-5 must be a number" to player
+                            else if arg-4 is "rarity" or "chance" or "percent":
+                                if arg-5 is set:
+                                    if {rarities::*} contains arg-5:
+                                        set {_index} to indexOf({rewards::%arg-2%::*},arg-3)
+                                        set {rewards::%arg-2%::%{_index}+3%} to arg-5
+                                        send "&7Changed rarity of &b%arg-3% &7to %coloredRarity(arg-5,{rarities::*})%&7 in %coloredRarity(arg-2,{rarities::*})% lootbox" to player
+                                    else:
+                                        send "&cThat isn't a rarity" to player
+                                else:
+                                    send "&cPlease specify a new rarity" to player
                             else:
-                                send "&c%proper case arg-2% lootbox doesn't have %proper case arg-3%" to player
+                                send "&cUsage: /lootbox %arg-1% %arg-2% %arg-3% <""range""/""rarity"">" to player
                         else:
-                            send "&cThat isn't an item" to player
+                            send "&c%proper case arg-2% lootbox doesn't have %arg-3%" to player
                     else:
-                        send "&cPlease specify an item to change" to player
+                        send "&cArg-3 must be an item" to player
                 else:
                     send "&c%arg-2% is not a lootbox" to player
             else:
                 send "&cPlease specify which lootbox to edit" to player
 
+on command "/lootbox give":
+    if arg-2 is set:
+        if {rarities::*} contains arg-2:
+            if arg-3 is set:
+                if arg-3 parsed as a player is online:
+                    if arg-4 parsed as an integer is an integer:
+                        set {_name} to coloredRarity(arg-2,{rarities::*})
+                        giveLootbox(arg-3 parsed as a player, {_name}, arg-4 parsed as an integer)
+                        send "&7Gave &b%arg-3 parsed as a player% &3%arg-4%x %{_name}% &7lootbox"
+                    else:
+                        send "&cArg-4 must be a number"
+                else:
+                    send "&c%arg-3 parsed as a player% is not online"
+            else:
+                send "&cPlease specify a player"
+        else:
+            send "&c%proper case arg-2% is not a lootbox" to player
+    else:
+        send "&cPlease specify which lootbox to give" to player
 
+on command "/lootbox get":
+    if arg-2 is set:
+        if {rarities::*} contains arg-2:
+            set {_name} to coloredRarity(arg-2,{rarities::*})
+            set {_amnt} to arg-3 parsed as an integer ? 1
+            giveLootbox(player, {_name}, {_amnt})
+        else:
+            send "&cThat lootbox doesn't exist"
 
 
 function setLootboxItems(p: player,list: objects):
@@ -331,8 +331,11 @@ function showLootboxItems(p: player,list: objects, page:integer):
             set {_amtL} to {_list::%{_index}+1%} parsed as an integer
             set {_amtU} to {_list::%{_index}+2%} parsed as an integer
             set {_rarity} to coloredRarity({_list::%{_index}+3%},{rarities::*})
-            set {_item} to {_list::%{_index}%} parsed as an item
-            set {_pItem} to proper case {_list::%{_index}%}
+            if {_list::%{_index}%} is not an item:
+                set {_item} to {_list::%{_index}%} parsed as an item
+            else:
+                set {_item} to {_list::%{_index}%}
+            set {_pItem} to proper case "%{_list::%{_index}%}%"
             set slot {_slot} of {_p}'s current inventory to {_amtU} of {_item} named "&b%{_pItem}%" with lore "&7Amount: &3%{_amtL}%-%{_amtU}%" and "&7Rarity: %proper case {_rarity}%"
             add 1 to {_slot}
         add 1 to {_index}
@@ -353,13 +356,11 @@ function giveLootbox(p:player, name:string, amnt:integer):
 
 
 function indexOf(list:objects,check:object):: integer:
-    if {_list::*} contains {_check}:
-        loop {_list::*}:
-            set {_index} to loop-index parsed as an integer
-            if loop-value = {_check}:
-                return {_index}
-    else:
-        return -1
+    loop {_list::*}:
+        set {_index} to loop-index parsed as an integer
+        if loop-value = {_check}:
+            return {_index}
+    return -1
 
 function newSlot(p:player):: integer:
     set {_slot} to (random integer between 0 and 26)
@@ -375,9 +376,10 @@ function ranAmnt(list:objects,index:integer):: integer:
 
 function setRareItem(p:player,rarity:string,rarities:objects,list:objects):
     set {_item} to random element out of {_rarities::*}
-    set {_loc} to indexOf({_list::*}, "%{_item}%")
+    if {_item} is not an item:
+        set {_item} to {_item} parsed as an item
+    set {_loc} to indexOf({_list::*}, {_item})
     set {_amt} to ranAmnt({_list::*},{_loc})
-    set {_item} to {_item} parsed as an item
     set slot newSlot({_p}) of {_p}'s current inventory to {_amt} of {_item}
 
 function setWithChance(p:player,rarity:string,rarities:objects,list:objects,min:integer,max:integer,chance:integer):
