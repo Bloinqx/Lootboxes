@@ -40,12 +40,12 @@ on load:
     # Example hard-coded rewards list (delete or edit here for it to change in-game)
     # !!!!NOTE: LINE #31 WILL OVERRIDE ANYTHING DONE IN-GAME, SO EDIT, COMMENT OUT, OR DELETE THE LINE HERE IF YOU WANT TO EDIT IT IN-GAME
     # Format: "item||min||max||rarity||item||min||max||rarity||..."
-    set {rewards::default::*} to "dirt||10||16||Common||stone||2||8||Uncommon||cobblestone||8||32||Common||andesite||1||8||Common||granite||1||16||Legendary||gravel||1||16||Common||sand||1||8||Common||oak plank||5||16||Common||bread||4||8||Common||leather||1||4||Uncommon||steak||2||8||rare||oak log||2||16||Uncommon||coal||3||8||Uncommon||iron ingot||1||8||Rare||gold ingot||1||4||rare||diamond||1||4||common||emerald||1||8||epic||golden apple||2||4||epic||netherite ingot||1||1||legendary||enchanted golden apple||1||1||legendary" split at "||"
+    set {rewards::default::*} to "dirt||10||16||Common||stone||2||8||Common||cobblestone||8||32||Common||andesite||1||8||Common||granite||1||16||Common||gravel||1||16||Common||sand||1||8||Common||oak plank||5||16||Common||bread||4||8||Common||leather||1||4||Uncommon||steak||2||8||Uncommon||oak log||2||16||Uncommon||coal||3||8||Uncommon||iron ingot||1||8||Rare||gold ingot||1||4||rare||diamond||1||4||epic||emerald||1||8||epic||golden apple||2||4||epic||netherite ingot||1||1||legendary||enchanted golden apple||1||1||legendary" split at "||"
 
     # Rarity names and corresponding formats. Add here to add new crate rarity (Used for lootbox and item rarity)
     # Format: Rarity Name||Displayed Name
     set {rarities::*} to "Default||&7Default||Common||&7Common||UnCommon||&3UnCommon||Rare||&9Rare||Epic||&5Epic||Legendary||&6Legendary" split at "||"
-
+    
     
 
     # Convert all hard-coded string-type items to item-type
@@ -362,6 +362,7 @@ function setLootboxItems(p: player,list: objects):
     setWithChance({_p},"rare",{_rarities::rare::*},{_list::*},{@minRare},{@maxRare},{@chanceRare})
     setWithChance({_p},"epic",{_rarities::epic::*},{_list::*},{@minEpic},{@maxEpic},{@chanceEpic})
     setWithChance({_p},"legendary",{_rarities::legendary::*},{_list::*},{@minLegendary},{@maxLegendary},{@chanceLegendary})
+    
 
 function showLootboxItems(p: player,list: objects, page:integer):
     set {_slot} to 9
@@ -403,6 +404,7 @@ function chestGlassBorder(p:player, size: integer, item: item):
 
 function giveLootbox(p:player, name:string, amnt:integer):
     give {_p} {_amnt} of chest named "&b🎁 Lootbox - %{_name}%" with lore "&8• &7Win all items shown" and "&8  &7when opened" and "" and "&8• &7Right-Click to Open" and "&8• &7Left-Click to View"
+
 
 function indexOf(list:objects,check:object):: integer:
     loop {_list::*}:
