@@ -1,6 +1,6 @@
 # ======================== #
 #
-#   Lootboxes v1.2 by Blinqx
+#   Lootboxes v1.3 by Blinqx
 #
 # ======================== #
 
@@ -40,12 +40,12 @@ on load:
     # Example hard-coded rewards list (delete or edit here for it to change in-game)
     # !!!!NOTE: LINE #31 WILL OVERRIDE ANYTHING DONE IN-GAME, SO EDIT, COMMENT OUT, OR DELETE THE LINE HERE IF YOU WANT TO EDIT IT IN-GAME
     # Format: "item||min||max||rarity||item||min||max||rarity||..."
-    set {rewards::default::*} to "dirt||10||16||Common||stone||2||8||Common||cobblestone||8||32||Common||andesite||1||8||Common||granite||1||16||Common||gravel||1||16||Common||sand||1||8||Common||oak plank||5||16||Common||bread||4||8||Common||leather||1||4||Uncommon||steak||2||8||Uncommon||oak log||2||16||Uncommon||coal||3||8||Uncommon||iron ingot||1||8||Rare||gold ingot||1||4||rare||diamond||1||4||epic||emerald||1||8||epic||golden apple||2||4||epic||netherite ingot||1||1||legendary||enchanted golden apple||1||1||legendary" split at "||"
+    set {rewards::default::*} to "dirt||10||16||Common||stone||2||8||Uncommon||cobblestone||8||32||Common||andesite||1||8||Common||granite||1||16||Legendary||gravel||1||16||Common||sand||1||8||Common||oak plank||5||16||Common||bread||4||8||Common||leather||1||4||Uncommon||steak||2||8||rare||oak log||2||16||Uncommon||coal||3||8||Uncommon||iron ingot||1||8||Rare||gold ingot||1||4||rare||diamond||1||4||common||emerald||1||8||epic||golden apple||2||4||epic||netherite ingot||1||1||legendary||enchanted golden apple||1||1||legendary" split at "||"
 
     # Rarity names and corresponding formats. Add here to add new crate rarity (Used for lootbox and item rarity)
     # Format: Rarity Name||Displayed Name
     set {rarities::*} to "Default||&7Default||Common||&7Common||UnCommon||&3UnCommon||Rare||&9Rare||Epic||&5Epic||Legendary||&6Legendary" split at "||"
-    
+
     
 
     # Convert all hard-coded string-type items to item-type
@@ -87,7 +87,6 @@ on left click with chest:
         open virtual chest with size {@lootboxViewSize} named "%name of player's tool% Rewards" to player
         chestGlassBorder(player, {@lootboxViewSize}, dark gray stained glass pane) # Set top and bottom glass border
         showLootboxItems(player, {rewards::%{_type::2}%::*},1) # Call function that shows lootbox rewards
-        #set slot {@lootboxViewSize}*9-4 of player's current inventory to paper named "&bNext Page" with lore "&8• &7View Page 2"
 
 # Disallow chests named "lootbox" from being placed to avoid possible exploits
 on place of chest:
@@ -146,8 +145,6 @@ on inventory click:
             chestGlassBorder(player, {@lootboxViewSize}, dark gray stained glass pane)
             showLootboxItems(player, {rewards::%{_type::2}%::*},{_pageNum})
 
-
-
 command /lootbox [<text>] [<text>] [<item>] [<text>] [<text>] [<text>]:
     permission: {@permPrefix}.lootbox
     permission message: {@permDenied}
@@ -163,10 +160,20 @@ command /lootbox [<text>] [<text>] [<item>] [<text>] [<text>] [<text>]:
             send "&8• &b/lootbox get &3<lootbox> <amount>"
             send "&8• &b/lootbox give &3<lootbox> <player> <amount>"
             send "&8• &b/lootbox add &3<lootbox> <item> <min> <max> <itemRarity>"
+            send "&8• &b/lootbox add &3<lootbox> hand <min> <max> <itemRarity>"
             send "&8• &b/lootbox remove &3<lootbox> <item>"
+            send "&8• &b/lootbox remove &3<lootbox> hand"
             send "&8• &b/lootbox reset &3<lootbox>"
             send "&8• &b/lootbox edit &3<lootbox> <item> &brange &3<min> <max>"
             send "&8• &b/lootbox edit &3<lootbox> <item> &brarity &3<newRarity>"
+            send "&8• &b/lootbox sort &3<lootbox>"
+        if arg-1 is "sort":
+            if arg-2 is set:
+                if {rarities::*} contains arg-2:
+                    sortRewards(arg-2)
+                    send "&8• &7Sorted %coloredRarity(arg-2,{rarities::*})%&7 lootbox's rarities"
+                else:
+                    send "&cThat lootbox doesn't exist"
         if arg-1 is "rarities":
             send "&3-==  &bLootbox Rarities  ==-"
             send ""
@@ -190,7 +197,8 @@ command /lootbox [<text>] [<text>] [<item>] [<text>] [<text>] [<text>]:
                                             add arg-4 to {rewards::%arg-2%::*}
                                             add arg-5 to {rewards::%arg-2%::*}
                                             add proper case arg-6 to {rewards::%arg-2%::*}
-                                            send "&7Added &b%arg-3%&7 to %coloredRarity(arg-2,{rarities::*})%&7 lootbox as a %coloredRarity(arg-6,{rarities::*})% &7with range &3%arg-4%-%arg-5%&7"
+                                            send "&8• &7Added &b%arg-3%&7 to %coloredRarity(arg-2,{rarities::*})%&7 lootbox as a %coloredRarity(arg-6,{rarities::*})% &7with range &3%arg-4%-%arg-5%&7"
+                                            send "&8• &7Sort rewards by rarity using ""&3/lootbox sort %arg-2%&7"""
                                         else:
                                             send "&cThat rarity doesn't exist"
                                     else:
@@ -210,7 +218,7 @@ command /lootbox [<text>] [<text>] [<item>] [<text>] [<text>] [<text>]:
         if arg-1 is "reset" or "clear" or "delete":
             if arg-2 is set:
                 delete {rewards::%arg-2%::*}
-                send "&7Cleared %coloredRarity(arg-2,{rarities::*})% lootbox rewards"
+                send "&8• &7Cleared %coloredRarity(arg-2,{rarities::*})% lootbox rewards"
         if arg-1 is "remove":
             if arg-2 is set:
                 if {rarities::*} contains arg-2:
@@ -220,7 +228,7 @@ command /lootbox [<text>] [<text>] [<item>] [<text>] [<text>] [<text>]:
                                 set {_index} to loop-index parsed as an integer
                                 if loop-value is arg-3:
                                     set {rewards::%arg-2%::%{_index}%} to {rewards::%arg-2%::%{_index}+4%}
-                                    send "&7Removed &b%arg-3%&7 from %coloredRarity(arg-2,{rarities::*})%&7 lootbox"
+                                    send "&8• &7Removed &b%arg-3%&7 from %coloredRarity(arg-2,{rarities::*})%&7 lootbox"
                                     set {_removed} to {_index}
                                 if {_removed} is set:
                                     set {rewards::%arg-2%::%{_index}%} to {rewards::%arg-2%::%{_index}+4%}
@@ -243,7 +251,7 @@ command /lootbox [<text>] [<text>] [<item>] [<text>] [<text>] [<text>]:
                                         set {_index} to indexOf({rewards::%arg-2%::*},arg-3)
                                         set {rewards::%arg-2%::%{_index}+1%} to arg-5
                                         set {rewards::%arg-2%::%{_index}+2%} to arg-6
-                                        send "&7Changed range of &b%arg-3% &7to &3%arg-5%-%arg-6%&7 in %coloredRarity(arg-2,{rarities::*})% lootbox" to player
+                                        send "&8• &7Changed range of &b%arg-3% &7to &3%arg-5%-%arg-6%&7 in %coloredRarity(arg-2,{rarities::*})% lootbox" to player
                                     else:
                                         send "&cArg-6 must be a number" to player
                                 else:
@@ -253,7 +261,7 @@ command /lootbox [<text>] [<text>] [<item>] [<text>] [<text>] [<text>]:
                                     if {rarities::*} contains arg-5:
                                         set {_index} to indexOf({rewards::%arg-2%::*},arg-3)
                                         set {rewards::%arg-2%::%{_index}+3%} to arg-5
-                                        send "&7Changed rarity of &b%arg-3% &7to %coloredRarity(arg-5,{rarities::*})%&7 in %coloredRarity(arg-2,{rarities::*})% lootbox" to player
+                                        send "&8• &7Changed rarity of &b%arg-3% &7to %coloredRarity(arg-5,{rarities::*})%&7 in %coloredRarity(arg-2,{rarities::*})% lootbox" to player
                                     else:
                                         send "&cThat isn't a rarity" to player
                                 else:
@@ -277,7 +285,7 @@ on command "/lootbox give":
                     if arg-4 parsed as an integer is an integer:
                         set {_name} to coloredRarity(arg-2,{rarities::*})
                         giveLootbox(arg-3 parsed as a player, {_name}, arg-4 parsed as an integer)
-                        send "&7Gave &b%arg-3 parsed as a player% &3%arg-4%x %{_name}% &7lootbox"
+                        send "&8• &7Gave &b%arg-3 parsed as a player% &3%arg-4%x %{_name}% &7lootbox"
                     else:
                         send "&cArg-4 must be a number"
                 else:
@@ -298,6 +306,48 @@ on command "/lootbox get":
         else:
             send "&cThat lootbox doesn't exist"
 
+on command "/lootbox add":
+    if arg-3 is "hand":
+        cancel event
+        set {_hand} to 1 of player's tool
+        if {rewards::%arg-2%::*} doesn't contain {_hand}:
+            if arg-4 parsed as an integer is an integer:
+                if arg-5 parsed as an integer is an integer:
+                    if arg-6 is set:
+                        if {rarities::*} contains arg-6:
+                            add {_hand} to {rewards::%arg-2%::*}
+                            add arg-4 to {rewards::%arg-2%::*}
+                            add arg-5 to {rewards::%arg-2%::*}
+                            add proper case arg-6 to {rewards::%arg-2%::*}
+                            send "&8• &7Added &8""&b%{_hand}%&8""&7 to %coloredRarity(arg-2,{rarities::*})%&7 lootbox as a %coloredRarity(arg-6,{rarities::*})% &7with range &3%arg-4%-%arg-5%&7"
+                            send "&8• &7Sort rewards by rarity using ""&3/lootbox sort %arg-2%&7"""
+                        else:
+                            send "&cThat rarity doesn't exist"
+                    else:
+                        send "&cSpecify the rarity of the item"
+                else:
+                    send "&cArg-5 must be a number" to player
+            else:
+                send "&cArg-4 must be a number" to player
+        else:
+            send "&c%proper case arg-2% lootbox already has &8""&7%{_hand}%&8""" to player
+
+on command "/lootbox remove":
+    if arg-3 is "hand":
+        cancel event
+        set {_hand} to 1 of player's tool
+        if {rewards::%arg-2%::*} contains {_hand}:
+            loop {rewards::%arg-2%::*}:
+                set {_index} to loop-index parsed as an integer
+                if loop-value is {_hand}:
+                    set {rewards::%arg-2%::%{_index}%} to {rewards::%arg-2%::%{_index}+4%}
+                    send "&8• &7Removed &8""&b%{_hand}%&8""&7 from %coloredRarity(arg-2,{rarities::*})%&7 lootbox"
+                    set {_removed} to {_index}
+                if {_removed} is set:
+                    set {rewards::%arg-2%::%{_index}%} to {rewards::%arg-2%::%{_index}+4%}
+        else:
+            send "&c%proper case arg-2% doesn't have &8""&7%{_hand}%&8"""
+
 
 function setLootboxItems(p: player,list: objects):
     loop {_list::*}:
@@ -312,7 +362,6 @@ function setLootboxItems(p: player,list: objects):
     setWithChance({_p},"rare",{_rarities::rare::*},{_list::*},{@minRare},{@maxRare},{@chanceRare})
     setWithChance({_p},"epic",{_rarities::epic::*},{_list::*},{@minEpic},{@maxEpic},{@chanceEpic})
     setWithChance({_p},"legendary",{_rarities::legendary::*},{_list::*},{@minLegendary},{@maxLegendary},{@chanceLegendary})
-    
 
 function showLootboxItems(p: player,list: objects, page:integer):
     set {_slot} to 9
@@ -341,6 +390,7 @@ function showLootboxItems(p: player,list: objects, page:integer):
         add 1 to {_index}
     if {_size}-2 > {_index}:
         set slot {@lootboxViewSize}*9-4 of {_p}'s current inventory to paper named "&bNext Page" with lore "&8• &7View Page %{_page}+1%"
+    set slot {@lootboxSize}*9-5 of {_p}'s current inventory to barrier named "&cClose GUI" with lore "&8• &7Close inventory"
 
 function chestGlassBorder(p:player, size: integer, item: item):
     loop 9 times:
@@ -353,7 +403,6 @@ function chestGlassBorder(p:player, size: integer, item: item):
 
 function giveLootbox(p:player, name:string, amnt:integer):
     give {_p} {_amnt} of chest named "&b🎁 Lootbox - %{_name}%" with lore "&8• &7Win all items shown" and "&8  &7when opened" and "" and "&8• &7Right-Click to Open" and "&8• &7Left-Click to View"
-
 
 function indexOf(list:objects,check:object):: integer:
     loop {_list::*}:
@@ -397,3 +446,35 @@ function coloredRarity(rarity:string,rarities:objects):: string:
     set {_index} to indexOf({_rarities::*},{_rarity})
     set {_colored} to {_rarities::%{_index}+1%}
     return {_colored}
+
+function getRarityWeight(rarity:string,rarities:objects) :: integer:
+    set {_weightCount} to 0
+    loop {_rarities::*}:
+        set {_index} to loop-index parsed as an integer
+        if mod({_index},2) != 0:
+            set {_weight::%loop-value%} to {_weightCount}
+            add 1 to {_weightCount}
+    return {_weight::%{_rarity}%}
+
+function sortRewards(lootbox:string):
+    set {_count0} to 1
+    while {_count0} <= (size of {rewards::%{_lootbox}%::*})/4:
+        set {_count} to 1
+        while {_count} <= (size of {rewards::%{_lootbox}%::*})/4:
+            set {_rarity} to proper case {rewards::%{_lootbox}%::%{_count}*4%}
+            set {_nextRarity} to proper case {rewards::%{_lootbox}%::%{_count}*4+4%}
+            if getRarityWeight({_nextRarity},{rarities::*}) < getRarityWeight({_rarity},{rarities::*}):
+                set {_nextName} to {rewards::%{_lootbox}%::%{_count}*4-3+4%}
+                set {_nextMin} to {rewards::%{_lootbox}%::%{_count}*4-3+5%}
+                set {_nextMax} to {rewards::%{_lootbox}%::%{_count}*4-3+6%}
+                set {_nextRare} to {rewards::%{_lootbox}%::%{_count}*4-3+7%}
+                set {rewards::%{_lootbox}%::%{_count}*4-3+4%} to {rewards::%{_lootbox}%::%{_count}*4-3%}
+                set {rewards::%{_lootbox}%::%{_count}*4-3+5%} to {rewards::%{_lootbox}%::%{_count}*4-3+1%}
+                set {rewards::%{_lootbox}%::%{_count}*4-3+6%} to {rewards::%{_lootbox}%::%{_count}*4-3+2%}
+                set {rewards::%{_lootbox}%::%{_count}*4-3+7%} to {rewards::%{_lootbox}%::%{_count}*4-3+3%}
+                set {rewards::%{_lootbox}%::%{_count}*4-3%} to {_nextName}
+                set {rewards::%{_lootbox}%::%{_count}*4-3+1%} to {_nextMin}
+                set {rewards::%{_lootbox}%::%{_count}*4-3+2%} to {_nextMax}
+                set {rewards::%{_lootbox}%::%{_count}*4-3+3%} to {_nextRare}
+            add 1 to {_count}
+        add 1 to {_count0}
